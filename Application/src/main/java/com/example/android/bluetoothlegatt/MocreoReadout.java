@@ -85,6 +85,11 @@ public class MocreoReadout {
                             32, maybeReadoutData.length()));
         }
         String dataSection = maybeReadoutData.split("\n")[1];
+        if(dataSection.length() < 24) {
+            throw new InvalidReadoutException(
+                    String.format("data segment incomplete: %s",
+                            dataSection));
+        }
         Character maybeUnit = dataSection.charAt(15);
         if(!unitMapping.containsKey(maybeUnit)) {
             throw new InvalidReadoutException(

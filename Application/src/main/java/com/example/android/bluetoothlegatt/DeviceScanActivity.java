@@ -47,6 +47,8 @@ public class DeviceScanActivity extends ListActivity {
     private boolean mScanning;
     private Handler mHandler;
 
+    private static final String TARGET_DEVICE_NAME = "SWAN";
+
     private static final int REQUEST_ENABLE_BT = 1;
     // Stops scanning after 10 seconds.
     private static final long SCAN_PERIOD = 10000;
@@ -248,14 +250,29 @@ public class DeviceScanActivity extends ListActivity {
     // Device scan callback.
     private BluetoothAdapter.LeScanCallback mLeScanCallback =
             new BluetoothAdapter.LeScanCallback() {
-
         @Override
         public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    mLeDeviceListAdapter.addDevice(device);
-                    mLeDeviceListAdapter.notifyDataSetChanged();
+                    String deviceName = device.getName();
+                    if(deviceName == null) {
+                        return;
+                    }
+                    if(deviceName.equals(TARGET_DEVICE_NAME)) {
+                        mLeDeviceListAdapter.addDevice(device);
+                        mLeDeviceListAdapter.notifyDataSetChanged();
+
+                        // auto-trigger the detail view
+                        final Intent intent = new Intent(DeviceScanActivity.this, DeviceControlActivity.class);
+                        intent.putExtra(DeviceControlActivity.EXTRAS_DEVICE_NAME, device.getName());
+                        intent.putExtra(DeviceControlActivity.EXTRAS_DEVICE_ADDRESS, device.getAddress());
+                        if (mScanning) {
+                            mBluetoothAdapter.stopLeScan(mLeScanCallback);
+                            mScanning = false;
+                        }
+                        startActivity(intent);
+                    }
                 }
             });
         }
