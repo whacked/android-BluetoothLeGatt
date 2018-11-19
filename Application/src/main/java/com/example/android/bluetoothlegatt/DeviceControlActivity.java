@@ -85,11 +85,10 @@ public class DeviceControlActivity extends Activity {
 
     private MocreoReadout mReadout;
     private String mLogFilePath = "";
-    private String mEntryName = "";
-    private String mBarCode = "";
-    private String mPhotoFilePath = "";
     private EditText mEntryNameEditText;
     private TextView mBarCodeTextView;
+    private TextView mPhotoFilePathTextView;
+
     private final String LIST_NAME = "NAME";
     private final String LIST_UUID = "UUID";
 
@@ -228,15 +227,19 @@ public class DeviceControlActivity extends Activity {
                 REQUEST_CODE_ASK_PERMISSIONS);
 
         // extended controls (buttons, entry input, etc)
-        final EditText txtEntry = findViewById(R.id.inp_entry_name);
+        final String mLogFilePath = ((EditText) findViewById(R.id.data_file_path))
+                .getText().toString();
+        mEntryNameEditText = findViewById(R.id.inp_entry_name);
+        mPhotoFilePathTextView = findViewById(R.id.data_photo);
+        mBarCodeTextView = findViewById(R.id.data_barcode);
         Button btnClear = findViewById(R.id.btn_clear);
         Button btnBarcode = findViewById(R.id.btn_barcode);
         Button btnPhoto = findViewById(R.id.btn_photo);
-        txtEntry.addTextChangedListener(new TextWatcher() {
+        mEntryNameEditText.addTextChangedListener(new TextWatcher() {
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             public void onTextChanged(CharSequence s, int start, int before, int count) {}
             public void afterTextChanged(Editable s) {
-                mEntryName = txtEntry.getText().toString();
+                // mEntryName = mEntryNameEditText.getText().toString();
             }
         });
 
