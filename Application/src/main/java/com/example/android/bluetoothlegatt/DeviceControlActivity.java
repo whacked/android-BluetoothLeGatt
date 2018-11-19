@@ -73,6 +73,7 @@ public class DeviceControlActivity extends Activity {
     private boolean mConnected = false;
     private BluetoothGattCharacteristic mNotifyCharacteristic;
 
+    private MocreoReadout mReadout;
     private String mBarCode = "";
     private String mPhotoFilePath = "";
     private final String LIST_NAME = "NAME";
@@ -308,8 +309,8 @@ public class DeviceControlActivity extends Activity {
     private void displayData(String data) {
         if (data != null) {
             try {
-                MocreoReadout readout = MocreoReadout.parseReadoutData(data);
-                mDataField.setText(readout.toString());
+                mReadout = MocreoReadout.parseReadoutData(data);
+                mDataField.setText(mReadout.toString());
             } catch(InvalidReadoutException e) {
 
             }
