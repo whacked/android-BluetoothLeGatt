@@ -131,7 +131,7 @@ public class DeviceControlActivity extends Activity {
                 mConnected = false;
                 updateConnectionState(R.string.disconnected);
                 invalidateOptionsMenu();
-                clearUI();
+                mDataField.setText(R.string.no_data);
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Show all the supported services and characteristics on the user interface.
                 displayGattServices(mBluetoothLeService.getSupportedGattServices());
@@ -143,6 +143,7 @@ public class DeviceControlActivity extends Activity {
 
     private void clearUI() {
         mDataField.setText(R.string.no_data);
+        mEntryNameEditText.setText("");
         mPhotoFilePathTextView.setText("");
         mBarCodeTextView.setText("");
     }
@@ -231,6 +232,7 @@ public class DeviceControlActivity extends Activity {
 
         // extended controls (buttons, entry input, etc)
         final EditText txtEntry = findViewById(R.id.inp_entry_name);
+        Button btnClear = findViewById(R.id.btn_clear);
         Button btnBarcode = findViewById(R.id.btn_barcode);
         Button btnPhoto = findViewById(R.id.btn_photo);
         txtEntry.addTextChangedListener(new TextWatcher() {
@@ -241,6 +243,12 @@ public class DeviceControlActivity extends Activity {
             }
         });
 
+        btnClear.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View _) {
+                clearUI();
+            }
+        });
         btnBarcode.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View _) {
