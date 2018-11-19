@@ -256,40 +256,6 @@ public class DeviceControlActivity extends Activity {
                 startActivityForResult(cameraIntent, REQUEST_CAMERA_IMAGE);
             }
         });
-    }
-
-    // want to show a permission dialog. this doesn't do it.
-    // currently explicitly allowing, by configuring the app directly on the phone
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS: {
-                Map<String, Integer> perms = new HashMap<String, Integer>();
-                // Initial
-                perms.put(android.Manifest.permission.ACCESS_FINE_LOCATION, PackageManager.PERMISSION_GRANTED);
-
-
-                // Fill with results
-                for (int i = 0; i < permissions.length; i++)
-                    perms.put(permissions[i], grantResults[i]);
-
-                // Check for ACCESS_FINE_LOCATION
-                if (perms.get(android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-
-                        ) {
-                    // All Permissions Granted
-
-                    // Permission Denied
-                    Toast.makeText(DeviceControlActivity.this, "All Permission GRANTED !! Thank You :)", Toast.LENGTH_SHORT)
-                            .show();
-
-
-                } else {
-                    // Permission Denied
-                    Toast.makeText(DeviceControlActivity.this, "One or More Permissions are DENIED Exiting App :(", Toast.LENGTH_SHORT)
-                            .show();
-
-                    finish();
                 }
             }
             break;
