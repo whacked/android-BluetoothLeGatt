@@ -83,6 +83,8 @@ public class DeviceControlActivity extends Activity {
     private BluetoothGattCharacteristic mNotifyCharacteristic;
 
     private MocreoReadout mReadout;
+    private String mLogFilePath = "";
+    private String mEntryName = "";
     private String mBarCode = "";
     private String mPhotoFilePath = "";
     private final String LIST_NAME = "NAME";
@@ -203,8 +205,18 @@ public class DeviceControlActivity extends Activity {
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
 
+        // extended controls (buttons, entry input, etc)
+        final EditText txtEntry = findViewById(R.id.inp_entry_name);
         Button btnBarcode = findViewById(R.id.btn_barcode);
         Button btnPhoto = findViewById(R.id.btn_photo);
+        txtEntry.addTextChangedListener(new TextWatcher() {
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            public void afterTextChanged(Editable s) {
+                mEntryName = txtEntry.getText().toString();
+            }
+        });
+
         btnPhoto.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View _) {
