@@ -58,8 +58,9 @@ public class DeviceControlActivity extends Activity {
     public static final String EXTRAS_DEVICE_NAME = "DEVICE_NAME";
     public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
 
-    final private int REQUEST_CODE_ASK_PERMISSIONS = 123;
-    final private int REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS = 124;
+    private static final int REQUEST_CODE_ASK_PERMISSIONS = 123;
+    private static final int REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS = 124;
+    private static final int REQUEST_CAMERA_IMAGE = 1;
 
     public static final String TARGET_SERVICE_UUID = "0000ffb0";
     public static final String TARGET_CHARACTERISTIC_UUID = "0000ffb2";
@@ -73,6 +74,8 @@ public class DeviceControlActivity extends Activity {
     private boolean mConnected = false;
     private BluetoothGattCharacteristic mNotifyCharacteristic;
 
+    private String mBarCode = "";
+    private String mPhotoFilePath = "";
     private final String LIST_NAME = "NAME";
     private final String LIST_UUID = "UUID";
 
@@ -129,6 +132,42 @@ public class DeviceControlActivity extends Activity {
         mDataField.setText(R.string.no_data);
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_CAMERA_IMAGE && resultCode == RESULT_OK) {
+            mPhotoFilePath = getLastImagePath();
+            if(mPhotoFilePath == null) {
+                mPhotoFilePath = "";
+            }
+            Toast.makeText(
+                    getApplicationContext(),
+                    "PHOTO AT : " + mPhotoFilePath, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // https://stackoverflow.com/a/9067155
+    private String getLastImagePath(){
+        final String[] imageColumns = { MediaStore.Images.Media._ID, MediaStore.Images.Media.DATA };
+        final String imageOrderBy = MediaStore.Images.Media._ID + " DESC";
+        Cursor imageCursor =  getContentResolver().query(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                imageColumns,
+                null,
+                null,
+                imageOrderBy);
+        if(imageCursor.moveToFirst()){
+            int id = imageCursor.getInt(imageCursor.getColumnIndex(MediaStore.Images.Media._ID));
+            String fullPath = imageCursor.getString(
+                    imageCursor.getColumnIndex(MediaStore.Images.Media.DATA));
+            Log.d(TAG, "getLastImageId::id " + id);
+            Log.d(TAG, "getLastImageId::path " + fullPath);
+            imageCursor.close();
+            return fullPath;
+        } else {
+            return null;
+        }
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -150,12 +189,22 @@ public class DeviceControlActivity extends Activity {
 
         requestPermissions(new String[]{
                         android.Manifest.permission.ACCESS_COARSE_LOCATION,
-                        android.Manifest.permission.ACCESS_FINE_LOCATION},
+                        android.Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.READ_EXTERNAL_STORAGE},
                 REQUEST_CODE_ASK_PERMISSIONS);
 
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
 
+        Button btnBarcode = findViewById(R.id.btn_barcode);
+        Button btnPhoto = findViewById(R.id.btn_photo);
+        btnPhoto.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View _) {
+                Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                startActivityForResult(cameraIntent, REQUEST_CAMERA_IMAGE);
+            }
+        });
     }
 
     // want to show a permission dialog. this doesn't do it.
