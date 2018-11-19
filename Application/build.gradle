@@ -22,6 +22,10 @@ dependencies {
     compile "com.android.support:support-v13:27.0.2"
     compile "com.android.support:cardview-v7:27.0.2"
     compile "com.android.support:appcompat-v7:27.0.2"
+
+    // ref https://stackoverflow.com/a/23788163
+    implementation 'com.journeyapps:zxing-android-embedded:3.0.2@aar'
+    implementation 'com.google.zxing:core:3.2.0'
 }
 
 // The sample build uses multiple directories to

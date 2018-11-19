@@ -69,6 +69,7 @@ public class DeviceControlActivity extends Activity {
 
     private static final int REQUEST_CODE_ASK_PERMISSIONS = 123;
     private static final int REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS = 124;
+    private static final int REQUEST_BARCODE_SCANNER = 49374;
     private static final int REQUEST_CAMERA_IMAGE = 1;
 
     public static final String TARGET_SERVICE_UUID = "0000ffb0";
@@ -87,6 +88,8 @@ public class DeviceControlActivity extends Activity {
     private String mEntryName = "";
     private String mBarCode = "";
     private String mPhotoFilePath = "";
+    private EditText mEntryNameEditText;
+    private TextView mBarCodeTextView;
     private final String LIST_NAME = "NAME";
     private final String LIST_UUID = "UUID";
 
@@ -140,18 +143,38 @@ public class DeviceControlActivity extends Activity {
 
     private void clearUI() {
         mDataField.setText(R.string.no_data);
+        mPhotoFilePathTextView.setText("");
+        mBarCodeTextView.setText("");
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_CAMERA_IMAGE && resultCode == RESULT_OK) {
-            mPhotoFilePath = getLastImagePath();
-            if(mPhotoFilePath == null) {
-                mPhotoFilePath = "";
-            }
-            Toast.makeText(
-                    getApplicationContext(),
-                    "PHOTO AT : " + mPhotoFilePath, Toast.LENGTH_SHORT).show();
+        Log.d("activity result", String.format(
+                "requestCode: %d, resultCode: %d",
+                requestCode, resultCode));
+        switch(requestCode) {
+            case REQUEST_CAMERA_IMAGE:
+                if(resultCode == RESULT_OK) {
+                    String lastImagePath = getLastImagePath();
+                    if(lastImagePath == null) {
+                        mPhotoFilePathTextView.setText("");
+                    } else {
+                        mPhotoFilePathTextView.setText(
+                                new File(lastImagePath).getName());
+                    }
+                }
+                break;
+            case REQUEST_BARCODE_SCANNER:
+                if(resultCode == RESULT_OK) {
+                    IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+                    if(scanResult != null) {
+                        mBarCodeTextView.setText(String.format(
+                                "%s:%s",
+                                scanResult.getFormatName(),
+                                scanResult.getContents()));
+                    }
+                }
+                break;
         }
     }
 
@@ -197,6 +220,7 @@ public class DeviceControlActivity extends Activity {
         getActionBar().setDisplayHomeAsUpEnabled(true);
 
         requestPermissions(new String[]{
+                        android.Manifest.permission.CAMERA,
                         android.Manifest.permission.ACCESS_COARSE_LOCATION,
                         android.Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.READ_EXTERNAL_STORAGE},
@@ -217,6 +241,14 @@ public class DeviceControlActivity extends Activity {
             }
         });
 
+        btnBarcode.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View _) {
+                Toast.makeText(getApplicationContext(),
+                        "take barcode", Toast.LENGTH_SHORT).show();
+                new IntentIntegrator(DeviceControlActivity.this).initiateScan();
+            }
+        });
         btnPhoto.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View _) {
