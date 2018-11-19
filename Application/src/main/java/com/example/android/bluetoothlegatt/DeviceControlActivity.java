@@ -16,7 +16,6 @@
 
 package com.example.android.bluetoothlegatt;
 
-import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
@@ -26,12 +25,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.IBinder;
 import android.provider.MediaStore;
 import android.support.annotation.RequiresApi;
@@ -46,14 +43,18 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.ByteArrayOutputStream;
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * For a given BLE device, this Activity provides the user interface to connect, display data,
@@ -68,7 +69,6 @@ public class DeviceControlActivity extends Activity {
     public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
 
     private static final int REQUEST_CODE_ASK_PERMISSIONS = 123;
-    private static final int REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS = 124;
     private static final int REQUEST_BARCODE_SCANNER = 49374;
     private static final int REQUEST_CAMERA_IMAGE = 1;
 
@@ -221,6 +221,7 @@ public class DeviceControlActivity extends Activity {
 
         requestPermissions(new String[]{
                         android.Manifest.permission.CAMERA,
+                        android.Manifest.permission.BLUETOOTH,
                         android.Manifest.permission.ACCESS_COARSE_LOCATION,
                         android.Manifest.permission.ACCESS_FINE_LOCATION,
                         android.Manifest.permission.READ_EXTERNAL_STORAGE,

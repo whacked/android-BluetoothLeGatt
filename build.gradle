@@ -1,10 +1,7 @@
-
-
-
-
-
-
-
-
-
-
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+    }
+}
