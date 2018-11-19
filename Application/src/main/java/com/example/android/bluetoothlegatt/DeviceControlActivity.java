@@ -223,7 +223,9 @@ public class DeviceControlActivity extends Activity {
                         android.Manifest.permission.CAMERA,
                         android.Manifest.permission.ACCESS_COARSE_LOCATION,
                         android.Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.READ_EXTERNAL_STORAGE},
+                        android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                        android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                },
                 REQUEST_CODE_ASK_PERMISSIONS);
 
         // extended controls (buttons, entry input, etc)
@@ -235,6 +237,8 @@ public class DeviceControlActivity extends Activity {
         Button btnClear = findViewById(R.id.btn_clear);
         Button btnBarcode = findViewById(R.id.btn_barcode);
         Button btnPhoto = findViewById(R.id.btn_photo);
+        Button btnSave = findViewById(R.id.btn_save);
+
         mEntryNameEditText.addTextChangedListener(new TextWatcher() {
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             public void onTextChanged(CharSequence s, int start, int before, int count) {}
@@ -264,12 +268,44 @@ public class DeviceControlActivity extends Activity {
                 startActivityForResult(cameraIntent, REQUEST_CAMERA_IMAGE);
             }
         });
+        btnSave.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View _) {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                JSONObject outStruct = new JSONObject();
+                String outputString = "";
+                try {
+                    outStruct.put("time", sdf.format(new Date()));
+                    outStruct.put("entry", mEntryNameEditText.getText().toString());
+                    outStruct.put("barcode", mBarCodeTextView.getText());
+                    outStruct.put("photo", mPhotoFilePathTextView.getText());
+                    outputString = outStruct.toString(0).replaceAll("\n", "");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+
+                    outputString = String.format(
+                            "%s,%s,%s,%s",
+                            sdf.format(new Date()),
+                            mEntryNameEditText.getText().toString(),
+                            mBarCodeTextView.getText(),
+                            mPhotoFilePathTextView.getText()
+                    );
+                }
+
+                File sdCard = Environment.getExternalStorageDirectory();
+                String outputFilePath = mLogFilePath.replace("/sdcard", sdCard.getAbsolutePath());
+                try {
+                    FileOutputStream fOut = new FileOutputStream(new File(outputFilePath));
+                    fOut.write(("\n" + outputString).getBytes());
+                    fOut.close();
+                    Toast.makeText(getApplicationContext(),
+                            "saved: " + outputFilePath, Toast.LENGTH_SHORT).show();
+                } catch (Exception e) {
+                    Toast.makeText(getApplicationContext(),
+                            "FAILED: " + e.toString(), Toast.LENGTH_SHORT).show();
                 }
             }
-            break;
-            default:
-                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        }
+        });
 
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
