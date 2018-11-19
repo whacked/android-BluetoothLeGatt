@@ -134,7 +134,7 @@ public class DeviceControlActivity extends Activity {
                 mDataField.setText(R.string.no_data);
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Show all the supported services and characteristics on the user interface.
-                displayGattServices(mBluetoothLeService.getSupportedGattServices());
+                initializeCharacteristic(mBluetoothLeService.getSupportedGattServices());
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
             }
@@ -227,9 +227,6 @@ public class DeviceControlActivity extends Activity {
                         Manifest.permission.READ_EXTERNAL_STORAGE},
                 REQUEST_CODE_ASK_PERMISSIONS);
 
-        Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
-        bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
-
         // extended controls (buttons, entry input, etc)
         final EditText txtEntry = findViewById(R.id.inp_entry_name);
         Button btnClear = findViewById(R.id.btn_clear);
@@ -270,6 +267,9 @@ public class DeviceControlActivity extends Activity {
             default:
                 super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
+
+        Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
+        bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
     }
 
     @Override
@@ -347,12 +347,9 @@ public class DeviceControlActivity extends Activity {
     // Demonstrates how to iterate through the supported GATT Services/Characteristics.
     // In this sample, we populate the data structure that is bound to the ExpandableListView
     // on the UI.
-    private void displayGattServices(List<BluetoothGattService> gattServices) {
+    private void initializeCharacteristic(List<BluetoothGattService> gattServices) {
         if (gattServices == null) return;
         String uuid = null;
-        String unknownServiceString = getResources().getString(R.string.unknown_service);
-        ArrayList<ArrayList<HashMap<String, String>>> gattCharacteristicData
-                = new ArrayList<ArrayList<HashMap<String, String>>>();
 
         BluetoothGattCharacteristic massCharacteristic = null;
 
@@ -372,14 +369,19 @@ public class DeviceControlActivity extends Activity {
                     continue;
                 }
                 massCharacteristic = gattCharacteristic;
+                break;
             }
         }
 
         // auto trigger reading the characteristic
-        if(massCharacteristic == null) {
+        setBluetoothNotifyCharacteristic(massCharacteristic);
+    }
+
+    private void setBluetoothNotifyCharacteristic(BluetoothGattCharacteristic characteristic) {
+        if(characteristic == null) {
             return;
         }
-        final int charaProp = massCharacteristic.getProperties();
+        final int charaProp = characteristic.getProperties();
         if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
             // If there is an active notification on a characteristic, clear
             // it first so it doesn't update the data field on the user interface.
@@ -388,12 +390,12 @@ public class DeviceControlActivity extends Activity {
                         mNotifyCharacteristic, false);
                 mNotifyCharacteristic = null;
             }
-            mBluetoothLeService.readCharacteristic(massCharacteristic);
+            mBluetoothLeService.readCharacteristic(characteristic);
         }
         if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
-            mNotifyCharacteristic = massCharacteristic;
+            mNotifyCharacteristic = characteristic;
             mBluetoothLeService.setCharacteristicNotification(
-                    massCharacteristic, true);
+                    characteristic, true);
         }
     }
 
