@@ -144,7 +144,6 @@
                     android:text="Photo" />
             </LinearLayout>
 
-
             <EditText
                 android:id="@+id/data_file_path"
                 android:layout_width="match_parent"
@@ -152,8 +151,8 @@
                 android:ems="10"
                 android:enabled="false"
                 android:inputType="text"
-                android:text="/path/to/file"
                 android:freezesText="true"
+                android:text="@string/default_log_file_path"
                 android:textSize="10sp" />
 
             <Button
