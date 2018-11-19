@@ -76,7 +76,7 @@ public class DeviceControlActivity extends Activity {
     public static final String TARGET_CHARACTERISTIC_UUID = "0000ffb2";
 
     private TextView mConnectionState;
-    private TextView mDataField;
+    private EditText mDataField;
     private String mDeviceName;
     private String mDeviceAddress;
     private BluetoothLeService mBluetoothLeService;
@@ -84,7 +84,7 @@ public class DeviceControlActivity extends Activity {
     private BluetoothGattCharacteristic mNotifyCharacteristic;
 
     private MocreoReadout mReadout;
-    private String mLogFilePath = "";
+    private String mLogFilePath;
     private EditText mEntryNameEditText;
     private TextView mBarCodeTextView;
     private TextView mPhotoFilePathTextView;
@@ -213,8 +213,8 @@ public class DeviceControlActivity extends Activity {
 
         // Sets up UI references.
         ((TextView) findViewById(R.id.device_address)).setText(mDeviceAddress);
-        mConnectionState = (TextView) findViewById(R.id.connection_state);
-        mDataField = (TextView) findViewById(R.id.data_value);
+        mConnectionState = findViewById(R.id.connection_state);
+        mDataField = findViewById(R.id.data_value);
 
         getActionBar().setTitle(mDeviceName);
         getActionBar().setDisplayHomeAsUpEnabled(true);
@@ -230,7 +230,7 @@ public class DeviceControlActivity extends Activity {
                 REQUEST_CODE_ASK_PERMISSIONS);
 
         // extended controls (buttons, entry input, etc)
-        final String mLogFilePath = ((EditText) findViewById(R.id.data_file_path))
+        mLogFilePath = ((EditText) findViewById(R.id.data_file_path))
                 .getText().toString();
         mEntryNameEditText = findViewById(R.id.inp_entry_name);
         mPhotoFilePathTextView = findViewById(R.id.data_photo);
@@ -278,6 +278,7 @@ public class DeviceControlActivity extends Activity {
                 try {
                     outStruct.put("time", sdf.format(new Date()));
                     outStruct.put("entry", mEntryNameEditText.getText().toString());
+                    outStruct.put("mass", mDataField.getText().toString());
                     outStruct.put("barcode", mBarCodeTextView.getText());
                     outStruct.put("photo", mPhotoFilePathTextView.getText());
                     outputString = outStruct.toString(0).replaceAll("\n", "");
@@ -285,9 +286,10 @@ public class DeviceControlActivity extends Activity {
                     e.printStackTrace();
 
                     outputString = String.format(
-                            "%s,%s,%s,%s",
+                            "%s,%s,%s,%s,%s",
                             sdf.format(new Date()),
                             mEntryNameEditText.getText().toString(),
+                            mDataField.getText().toString(),
                             mBarCodeTextView.getText(),
                             mPhotoFilePathTextView.getText()
                     );
