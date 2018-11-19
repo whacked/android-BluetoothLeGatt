@@ -1,3 +1,6 @@
 .idea
 .gradle
 Application/build
+Application.iml
+local.properties
+/build/android-profile
