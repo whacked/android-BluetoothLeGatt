@@ -74,6 +74,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/no_data"
+                    android:freezesText="true"
                     android:textSize="24sp" />
             </LinearLayout>
 
@@ -83,6 +84,7 @@
                 android:layout_height="wrap_content"
                 android:ems="10"
                 android:hint="entry name"
+                android:freezesText="true"
                 android:inputType="textAutoCorrect"
                 android:text="" />
 
@@ -98,6 +100,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:hint="scan a barcode"
+                    android:freezesText="true"
                     android:text=""
                     android:textSize="18sp" />
 
@@ -125,6 +128,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:hint="add a photo"
+                    android:freezesText="true"
                     android:text=""
                     android:textSize="18sp" />
 
@@ -149,6 +153,7 @@
                 android:enabled="false"
                 android:inputType="text"
                 android:text="/path/to/file"
+                android:freezesText="true"
                 android:textSize="10sp" />
 
             <Button
