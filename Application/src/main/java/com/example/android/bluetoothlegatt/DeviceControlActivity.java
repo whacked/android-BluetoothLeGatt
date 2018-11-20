@@ -272,7 +272,7 @@ public class DeviceControlActivity extends Activity {
         btnSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View _) {
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
                 JSONObject outStruct = new JSONObject();
                 String outputString = "";
                 try {
@@ -298,7 +298,7 @@ public class DeviceControlActivity extends Activity {
                 File sdCard = Environment.getExternalStorageDirectory();
                 String outputFilePath = mLogFilePath.replace("/sdcard", sdCard.getAbsolutePath());
                 try {
-                    FileOutputStream fOut = new FileOutputStream(new File(outputFilePath));
+                    FileOutputStream fOut = new FileOutputStream(new File(outputFilePath), true);
                     fOut.write(("\n" + outputString).getBytes());
                     fOut.close();
                     Toast.makeText(getApplicationContext(),
