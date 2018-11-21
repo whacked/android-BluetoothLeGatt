@@ -53,6 +53,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -277,10 +278,16 @@ public class DeviceControlActivity extends Activity {
                 String outputString = "";
                 try {
                     outStruct.put("time", sdf.format(new Date()));
-                    outStruct.put("entry", mEntryNameEditText.getText().toString());
-                    outStruct.put("mass", mDataField.getText().toString());
-                    outStruct.put("barcode", mBarCodeTextView.getText());
-                    outStruct.put("photo", mPhotoFilePathTextView.getText());
+                    outStruct.put("entry", mEntryNameEditText.getText());
+                    if(mDataField.getText().length() > 0) {
+                        outStruct.put("mass", mDataField.getText());
+                    }
+                    if(mBarCodeTextView.getText().length() > 0) {
+                        outStruct.put("barcode", mBarCodeTextView.getText());
+                    }
+                    if(mPhotoFilePathTextView.getText().length() > 0) {
+                        outStruct.put("photo", mPhotoFilePathTextView.getText());
+                    }
                     outputString = outStruct.toString(0).replaceAll("\n", "");
                 } catch (JSONException e) {
                     e.printStackTrace();
