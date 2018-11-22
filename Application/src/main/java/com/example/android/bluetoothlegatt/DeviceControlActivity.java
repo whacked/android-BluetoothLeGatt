@@ -387,7 +387,7 @@ public class DeviceControlActivity extends Activity {
             try {
                 mReadout = MocreoReadout.parseReadoutData(data);
                 mDataField.setText(mReadout.toString());
-            } catch(InvalidReadoutException e) {
+            } catch(MocreoReadout.InvalidReadoutException e) {
 
             }
         }

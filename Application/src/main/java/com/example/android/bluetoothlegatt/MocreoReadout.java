@@ -31,6 +31,12 @@ enum Unit
 }
 
 public class MocreoReadout {
+    static class InvalidReadoutException extends Exception {
+        public InvalidReadoutException(String message) {
+            super(message);
+        }
+    }
+
     public static Map<Character, Unit> unitMapping;
     static {
         Map<Character, Unit> initMap = new HashMap<>();
