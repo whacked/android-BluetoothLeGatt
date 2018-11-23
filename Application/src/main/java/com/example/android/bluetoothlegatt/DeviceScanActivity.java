@@ -17,32 +17,55 @@
 package com.example.android.bluetoothlegatt;
 
 import android.app.Activity;
-import android.app.ListActivity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
+import android.os.IBinder;
+import android.provider.MediaStore;
+import android.support.annotation.RequiresApi;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.ListView;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * Activity for scanning and displaying available Bluetooth LE devices.
  */
-public class DeviceScanActivity extends ListActivity {
-    private LeDeviceListAdapter mLeDeviceListAdapter;
+public class DeviceScanActivity extends Activity {
     private BluetoothAdapter mBluetoothAdapter;
     private boolean mScanning;
     private Handler mHandler;
@@ -50,9 +73,130 @@ public class DeviceScanActivity extends ListActivity {
     private static final String TARGET_DEVICE_NAME = "SWAN";
 
     private static final int REQUEST_ENABLE_BT = 1;
+    private static final int REQUEST_CODE_ASK_PERMISSIONS = 123;
+    private static final int REQUEST_BARCODE_SCANNER = 49374;
+    private static final int REQUEST_CAMERA_IMAGE = 2;
+
     // Stops scanning after 10 seconds.
     private static final long SCAN_PERIOD = 10000;
 
+    private String mDeviceAddress;
+    private EditText mEntryNameEditText;
+    private TextView mBarCodeTextView;
+    private TextView mPhotoFilePathTextView;
+    private TextView mLogFilePath;
+
+    public static final String TARGET_SERVICE_UUID = "0000ffb0";
+    public static final String TARGET_CHARACTERISTIC_UUID = "0000ffb2";
+
+    private TextView mConnectionState;
+    private EditText mDataField;
+    private boolean mConnected = false;
+    private BluetoothGattCharacteristic mNotifyCharacteristic;
+
+    private MocreoReadout mReadout;
+
+    private BluetoothLeService mBluetoothLeService;
+    private final static String TAG = DeviceScanActivity.class.getSimpleName();
+
+    // Code to manage Service lifecycle.
+    private final ServiceConnection mServiceConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder service) {
+            mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
+            if (!mBluetoothLeService.initialize()) {
+                Log.e(TAG, "Unable to initialize Bluetooth");
+            }
+            // Automatically connects to the device upon successful start-up initialization.
+            mBluetoothLeService.connect(mDeviceAddress);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            mBluetoothLeService = null;
+        }
+    };
+
+    // Handles various events fired by the Service.
+    // ACTION_GATT_CONNECTED: connected to a GATT server.
+    // ACTION_GATT_DISCONNECTED: disconnected from a GATT server.
+    // ACTION_GATT_SERVICES_DISCOVERED: discovered GATT services.
+    // ACTION_DATA_AVAILABLE: received data from the device.  This can be a result of read
+    //                        or notification operations.
+    private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+            if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
+                mConnected = true;
+                updateConnectionState(R.string.connected);
+            } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
+                mConnected = false;
+                updateConnectionState(R.string.disconnected);
+                mDataField.setText(R.string.no_data);
+            } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
+                // Show all the supported services and characteristics on the user interface.
+                initializeCharacteristic(mBluetoothLeService.getSupportedGattServices());
+            } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
+                displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
+            }
+        }
+    };
+
+    private void displayData(String data) {
+        if (data != null) {
+            try {
+                mReadout = MocreoReadout.parseReadoutData(data);
+                mDataField.setText(mReadout.toString());
+            } catch(MocreoReadout.InvalidReadoutException e) {
+
+            }
+        }
+    }
+
+    private void updateConnectionState(final int resourceId) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mConnectionState.setText(resourceId);
+            }
+        });
+    }
+    // Demonstrates how to iterate through the supported GATT Services/Characteristics.
+    // In this sample, we populate the data structure that is bound to the ExpandableListView
+    // on the UI.
+    private void initializeCharacteristic(List<BluetoothGattService> gattServices) {
+        if (gattServices == null) return;
+        String uuid = null;
+
+        BluetoothGattCharacteristic massCharacteristic = null;
+
+        // Loops through available GATT Services.
+        for (BluetoothGattService gattService : gattServices) {
+            uuid = gattService.getUuid().toString();
+            if(!uuid.startsWith(TARGET_SERVICE_UUID)) {
+                continue;
+            }
+            List<BluetoothGattCharacteristic> gattCharacteristics =
+                    gattService.getCharacteristics();
+
+            // Loops through available Characteristics.
+            for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
+                uuid = gattCharacteristic.getUuid().toString();
+                if(!uuid.startsWith(TARGET_CHARACTERISTIC_UUID)) {
+                    continue;
+                }
+                massCharacteristic = gattCharacteristic;
+                break;
+            }
+        }
+
+        // auto trigger reading the characteristic
+        setBluetoothNotifyCharacteristic(massCharacteristic);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,6 +210,18 @@ public class DeviceScanActivity extends ListActivity {
             finish();
         }
 
+        requestPermissions(new String[]{
+                        android.Manifest.permission.CAMERA,
+                        android.Manifest.permission.BLUETOOTH,
+                        android.Manifest.permission.ACCESS_COARSE_LOCATION,
+                        android.Manifest.permission.ACCESS_FINE_LOCATION,
+                        android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                        android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                },
+                REQUEST_CODE_ASK_PERMISSIONS);
+
+        initMainView();
+
         // Initializes a Bluetooth adapter.  For API level 18 and above, get a reference to
         // BluetoothAdapter through BluetoothManager.
         final BluetoothManager bluetoothManager =
@@ -77,6 +233,28 @@ public class DeviceScanActivity extends ListActivity {
             Toast.makeText(this, R.string.error_bluetooth_not_supported, Toast.LENGTH_SHORT).show();
             finish();
             return;
+        }
+    }
+
+    private void setBluetoothNotifyCharacteristic(BluetoothGattCharacteristic characteristic) {
+        if(characteristic == null) {
+            return;
+        }
+        final int charaProp = characteristic.getProperties();
+        if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
+            // If there is an active notification on a characteristic, clear
+            // it first so it doesn't update the data field on the user interface.
+            if (mNotifyCharacteristic != null) {
+                mBluetoothLeService.setCharacteristicNotification(
+                        mNotifyCharacteristic, false);
+                mNotifyCharacteristic = null;
+            }
+            mBluetoothLeService.readCharacteristic(characteristic);
+        }
+        if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
+            mNotifyCharacteristic = characteristic;
+            mBluetoothLeService.setCharacteristicNotification(
+                    characteristic, true);
         }
     }
 
@@ -100,7 +278,6 @@ public class DeviceScanActivity extends ListActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_scan:
-                mLeDeviceListAdapter.clear();
                 scanLeDevice(true);
                 break;
             case R.id.menu_stop:
@@ -108,6 +285,12 @@ public class DeviceScanActivity extends ListActivity {
                 break;
         }
         return true;
+    }
+
+    private void initMainView() {
+        LayoutInflater mInflator = DeviceScanActivity.this.getLayoutInflater();
+        View view = mInflator.inflate(R.layout.listitem_device, null);
+        setContentView(view);
     }
 
     @Override
@@ -122,42 +305,67 @@ public class DeviceScanActivity extends ListActivity {
                 startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
             }
         }
-
-        // Initializes list view adapter.
-        mLeDeviceListAdapter = new LeDeviceListAdapter();
-        setListAdapter(mLeDeviceListAdapter);
         scanLeDevice(true);
+
+        registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
+        if (mBluetoothLeService != null) {
+            final boolean result = mBluetoothLeService.connect(mDeviceAddress);
+            Log.d(TAG, "Connect request result=" + result);
+        }
+    }
+
+    private static IntentFilter makeGattUpdateIntentFilter() {
+        final IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
+        intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
+        intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
+        intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
+        return intentFilter;
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        // User chose not to enable Bluetooth.
-        if (requestCode == REQUEST_ENABLE_BT && resultCode == Activity.RESULT_CANCELED) {
-            finish();
-            return;
+        Log.d("activity result", String.format(
+                "requestCode: %d, resultCode: %d",
+                requestCode, resultCode));
+        switch(requestCode) {
+            case REQUEST_ENABLE_BT:
+                if(resultCode == Activity.RESULT_CANCELED) {
+                    Toast.makeText(getApplicationContext(),
+                            "Bluetooth will not be available", Toast.LENGTH_LONG).show();
+                }
+                break;
+            case REQUEST_CAMERA_IMAGE:
+                if(resultCode == RESULT_OK) {
+                    String lastImagePath = getLastImagePath();
+                    if(lastImagePath == null) {
+                        mPhotoFilePathTextView.setText("");
+                    } else {
+                        mPhotoFilePathTextView.setText(
+                                new File(lastImagePath).getName());
+                    }
+                }
+                break;
+            case REQUEST_BARCODE_SCANNER:
+                if(resultCode == RESULT_OK) {
+                    IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+                    if(scanResult != null) {
+                        mBarCodeTextView.setText(String.format(
+                                "%s:%s",
+                                scanResult.getFormatName(),
+                                scanResult.getContents()));
+                    }
+                }
+                break;
+            default:
+                super.onActivityResult(requestCode, resultCode, data);
         }
-        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         scanLeDevice(false);
-        mLeDeviceListAdapter.clear();
-    }
-
-    @Override
-    protected void onListItemClick(ListView l, View v, int position, long id) {
-        final BluetoothDevice device = mLeDeviceListAdapter.getDevice(position);
-        if (device == null) return;
-        final Intent intent = new Intent(this, DeviceControlActivity.class);
-        intent.putExtra(DeviceControlActivity.EXTRAS_DEVICE_NAME, device.getName());
-        intent.putExtra(DeviceControlActivity.EXTRAS_DEVICE_ADDRESS, device.getAddress());
-        if (mScanning) {
-            mBluetoothAdapter.stopLeScan(mLeScanCallback);
-            mScanning = false;
-        }
-        startActivity(intent);
     }
 
     private void scanLeDevice(final boolean enable) {
@@ -181,70 +389,104 @@ public class DeviceScanActivity extends ListActivity {
         invalidateOptionsMenu();
     }
 
-    // Adapter for holding devices found through scanning.
-    private class LeDeviceListAdapter extends BaseAdapter {
-        private ArrayList<BluetoothDevice> mLeDevices;
-        private LayoutInflater mInflator;
+    private void setupBTDeviceView(BluetoothDevice device) {
+        final String deviceName = device.getName();
 
-        public LeDeviceListAdapter() {
-            super();
-            mLeDevices = new ArrayList<BluetoothDevice>();
-            mInflator = DeviceScanActivity.this.getLayoutInflater();
-        }
+        TextView deviceNameView = findViewById(R.id.device_name);
+        TextView deviceAddressView = findViewById(R.id.device_address);
 
-        public void addDevice(BluetoothDevice device) {
-            if(!mLeDevices.contains(device)) {
-                mLeDevices.add(device);
+        deviceNameView.setText(deviceName);
+        deviceAddressView.setText(device.getAddress());
+
+        mConnectionState = findViewById(R.id.connection_state);
+        mDataField = findViewById(R.id.data_value);
+
+        // extended controls (buttons, entry input, etc)
+        mLogFilePath = findViewById(R.id.data_file_path);
+        mEntryNameEditText = findViewById(R.id.inp_entry_name);
+        mPhotoFilePathTextView = findViewById(R.id.data_photo);
+        mBarCodeTextView = findViewById(R.id.data_barcode);
+
+        Button btnClear = findViewById(R.id.btn_clear);
+        Button btnBarcode = findViewById(R.id.btn_barcode);
+        Button btnPhoto = findViewById(R.id.btn_photo);
+        Button btnSave = findViewById(R.id.btn_save);
+
+        btnClear.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View _) {
+                clearUI();
             }
-        }
-
-        public BluetoothDevice getDevice(int position) {
-            return mLeDevices.get(position);
-        }
-
-        public void clear() {
-            mLeDevices.clear();
-        }
-
-        @Override
-        public int getCount() {
-            return mLeDevices.size();
-        }
-
-        @Override
-        public Object getItem(int i) {
-            return mLeDevices.get(i);
-        }
-
-        @Override
-        public long getItemId(int i) {
-            return i;
-        }
-
-        @Override
-        public View getView(int i, View view, ViewGroup viewGroup) {
-            ViewHolder viewHolder;
-            // General ListView optimization code.
-            if (view == null) {
-                view = mInflator.inflate(R.layout.listitem_device, null);
-                viewHolder = new ViewHolder();
-                viewHolder.deviceAddress = (TextView) view.findViewById(R.id.device_address);
-                viewHolder.deviceName = (TextView) view.findViewById(R.id.device_name);
-                view.setTag(viewHolder);
-            } else {
-                viewHolder = (ViewHolder) view.getTag();
+        });
+        btnBarcode.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View _) {
+                Toast.makeText(getApplicationContext(),
+                        "take barcode", Toast.LENGTH_SHORT).show();
+                new IntentIntegrator(DeviceScanActivity.this).initiateScan();
             }
+        });
+        btnPhoto.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View _) {
+                Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                startActivityForResult(cameraIntent, REQUEST_CAMERA_IMAGE);
+            }
+        });
+        btnSave.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View _) {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
+                JSONObject outStruct = new JSONObject();
+                String outputString = "";
+                try {
+                    outStruct.put("time", sdf.format(new Date()));
+                    outStruct.put("entry", mEntryNameEditText.getText());
+                    if(mDataField.getText().length() > 0) {
+                        outStruct.put("mass", mDataField.getText());
+                    }
+                    if(mBarCodeTextView.getText().length() > 0) {
+                        outStruct.put("barcode", mBarCodeTextView.getText());
+                    }
+                    if(mPhotoFilePathTextView.getText().length() > 0) {
+                        outStruct.put("photo", mPhotoFilePathTextView.getText());
+                    }
+                    outputString = outStruct.toString(0).replaceAll("\n", "");
+                } catch (JSONException e) {
+                    e.printStackTrace();
 
-            BluetoothDevice device = mLeDevices.get(i);
-            final String deviceName = device.getName();
-            if (deviceName != null && deviceName.length() > 0)
-                viewHolder.deviceName.setText(deviceName);
-            else
-                viewHolder.deviceName.setText(R.string.unknown_device);
-            viewHolder.deviceAddress.setText(device.getAddress());
+                    outputString = String.format(
+                            "%s,%s,%s,%s,%s",
+                            sdf.format(new Date()),
+                            mEntryNameEditText.getText().toString(),
+                            mDataField.getText().toString(),
+                            mBarCodeTextView.getText(),
+                            mPhotoFilePathTextView.getText()
+                    );
+                }
 
-            return view;
-        }
+                File sdCard = Environment.getExternalStorageDirectory();
+                String outputFilePath = mLogFilePath.getText().toString()
+                        .replace("/sdcard", sdCard.getAbsolutePath());
+                try {
+                    FileOutputStream fOut = new FileOutputStream(new File(outputFilePath), true);
+                    fOut.write(("\n" + outputString).getBytes());
+                    fOut.close();
+                    Toast.makeText(getApplicationContext(),
+                            "saved: " + outputFilePath, Toast.LENGTH_SHORT).show();
+                } catch (Exception e) {
+                    Toast.makeText(getApplicationContext(),
+                            "FAILED: " + e.toString(), Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    private void clearUI() {
+        mDataField.setText(R.string.no_data);
+        mEntryNameEditText.setText("");
+        mPhotoFilePathTextView.setText("");
+        mBarCodeTextView.setText("");
     }
 
     // Device scan callback.
@@ -260,26 +502,44 @@ public class DeviceScanActivity extends ListActivity {
                         return;
                     }
                     if(deviceName.equals(TARGET_DEVICE_NAME)) {
-                        mLeDeviceListAdapter.addDevice(device);
-                        mLeDeviceListAdapter.notifyDataSetChanged();
-
-                        // auto-trigger the detail view
-                        final Intent intent = new Intent(DeviceScanActivity.this, DeviceControlActivity.class);
-                        intent.putExtra(DeviceControlActivity.EXTRAS_DEVICE_NAME, device.getName());
-                        intent.putExtra(DeviceControlActivity.EXTRAS_DEVICE_ADDRESS, device.getAddress());
                         if (mScanning) {
                             mBluetoothAdapter.stopLeScan(mLeScanCallback);
                             mScanning = false;
                         }
-                        startActivity(intent);
+                        setupBTDeviceView(device);
+                        startRetrievingData(device.getAddress());
                     }
                 }
             });
         }
     };
 
-    static class ViewHolder {
-        TextView deviceName;
-        TextView deviceAddress;
+    private void startRetrievingData(String deviceAddress) {
+        mDeviceAddress = deviceAddress;
+        Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
+        bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+    }
+
+    // https://stackoverflow.com/a/9067155
+    private String getLastImagePath(){
+        final String[] imageColumns = { MediaStore.Images.Media._ID, MediaStore.Images.Media.DATA };
+        final String imageOrderBy = MediaStore.Images.Media._ID + " DESC";
+        Cursor imageCursor = getContentResolver().query(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                imageColumns,
+                null,
+                null,
+                imageOrderBy);
+        if(imageCursor.moveToFirst()){
+            int id = imageCursor.getInt(imageCursor.getColumnIndex(MediaStore.Images.Media._ID));
+            String fullPath = imageCursor.getString(
+                    imageCursor.getColumnIndex(MediaStore.Images.Media.DATA));
+            Log.d(TAG, "getLastImageId::id " + id);
+            Log.d(TAG, "getLastImageId::path " + fullPath);
+            imageCursor.close();
+            return fullPath;
+        } else {
+            return null;
+        }
     }
 }
