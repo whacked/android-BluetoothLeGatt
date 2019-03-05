@@ -54,6 +54,7 @@ import android.widget.Toast;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -163,6 +164,14 @@ public class DeviceScanActivity extends Activity {
 
             }
         }
+    }
+
+    private JSONArray list2JsonArray(ArrayList<String> arr) {
+        JSONArray out = new JSONArray();
+        for(String element: arr) {
+            out.put(element);
+        }
+        return out;
     }
 
     private void updateConnectionState(final int resourceId) {
