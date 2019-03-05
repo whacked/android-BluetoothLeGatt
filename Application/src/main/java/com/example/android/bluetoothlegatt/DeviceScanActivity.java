@@ -311,6 +311,22 @@ public class DeviceScanActivity extends Activity {
         LayoutInflater mInflator = DeviceScanActivity.this.getLayoutInflater();
         View view = mInflator.inflate(R.layout.listitem_device, null);
         setContentView(view);
+        // extended controls (buttons, entry input, etc)
+        mLogFilePath = findViewById(R.id.data_file_path);
+        mEntryNameEditText = findViewById(R.id.inp_entry_name);
+        mDataField = findViewById(R.id.data_value);
+
+        Button btnClear = findViewById(R.id.btn_clear);
+        Button btnBarcode = findViewById(R.id.btn_barcode);
+        Button btnPhoto = findViewById(R.id.btn_photo);
+        Button btnSave = findViewById(R.id.btn_save);
+
+        btnClear.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View _) {
+                clearUI();
+            }
+        });
     }
 
     @Override
@@ -416,90 +432,16 @@ public class DeviceScanActivity extends Activity {
         TextView deviceAddressView = findViewById(R.id.device_address);
 
         deviceNameView.setText(deviceName);
-        deviceAddressView.setText(device.getAddress());
+        // deviceAddressView.setText(device.getAddress());
+        getActionBar().setTitle(device.getAddress());
 
         mConnectionState = findViewById(R.id.connection_state);
-        mDataField = findViewById(R.id.data_value);
+        mScaleDataField = findViewById(R.id.data_scale);
 
-        // extended controls (buttons, entry input, etc)
-        mLogFilePath = findViewById(R.id.data_file_path);
-        mEntryNameEditText = findViewById(R.id.inp_entry_name);
-        mPhotoFilePathTextView = findViewById(R.id.data_photo);
-        mBarCodeTextView = findViewById(R.id.data_barcode);
-
-        Button btnClear = findViewById(R.id.btn_clear);
-        Button btnBarcode = findViewById(R.id.btn_barcode);
-        Button btnPhoto = findViewById(R.id.btn_photo);
-        Button btnSave = findViewById(R.id.btn_save);
-
-        btnClear.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View _) {
-                clearUI();
-            }
-        });
-        btnBarcode.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View _) {
-                Toast.makeText(getApplicationContext(),
-                        "take barcode", Toast.LENGTH_SHORT).show();
-                new IntentIntegrator(DeviceScanActivity.this).initiateScan();
-            }
-        });
-        btnPhoto.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View _) {
-                Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                startActivityForResult(cameraIntent, REQUEST_CAMERA_IMAGE);
-            }
-        });
-        btnSave.setOnClickListener(new View.OnClickListener() {
         Button btnTake = findViewById(R.id.btn_take);
         btnTake.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View _) {
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
-                JSONObject outStruct = new JSONObject();
-                String outputString = "";
-                try {
-                    outStruct.put("time", sdf.format(new Date()));
-                    outStruct.put("entry", mEntryNameEditText.getText());
-                    if(mDataField.getText().length() > 0) {
-                        outStruct.put("mass", mDataField.getText());
-                    }
-                    if(mBarCodeTextView.getText().length() > 0) {
-                        outStruct.put("barcode", mBarCodeTextView.getText());
-                    }
-                    if(mPhotoFilePathTextView.getText().length() > 0) {
-                        outStruct.put("photo", mPhotoFilePathTextView.getText());
-                    }
-                    outputString = outStruct.toString(0).replaceAll("\n", "");
-                } catch (JSONException e) {
-                    e.printStackTrace();
-
-                    outputString = String.format(
-                            "%s,%s,%s,%s,%s",
-                            sdf.format(new Date()),
-                            mEntryNameEditText.getText().toString(),
-                            mDataField.getText().toString(),
-                            mBarCodeTextView.getText(),
-                            mPhotoFilePathTextView.getText()
-                    );
-                }
-
-                File sdCard = Environment.getExternalStorageDirectory();
-                String outputFilePath = mLogFilePath.getText().toString()
-                        .replace("/sdcard", sdCard.getAbsolutePath());
-                try {
-                    FileOutputStream fOut = new FileOutputStream(new File(outputFilePath), true);
-                    fOut.write(("\n" + outputString).getBytes());
-                    fOut.close();
-                    Toast.makeText(getApplicationContext(),
-                            "saved: " + outputFilePath, Toast.LENGTH_SHORT).show();
-                } catch (Exception e) {
-                    Toast.makeText(getApplicationContext(),
-                            "FAILED: " + e.toString(), Toast.LENGTH_SHORT).show();
-                }
                 mDataField.setText(mScaleDataField.getText());
             }
         });
