@@ -175,6 +175,20 @@ public class DeviceScanActivity extends Activity {
         return out;
     }
 
+    private void addPhotoFilePathEntry(String photoFilePathEntry) {
+        mPhotoFilePathList.add(photoFilePathEntry);
+        mPhotoFilePathListAdapter.notifyDataSetChanged();
+        JSONArray photoFilePathList = list2JsonArray(mPhotoFilePathList);
+        mPhotoFilePathTextView.setText(photoFilePathList.toString());
+    }
+
+    private void addBarCodeEntry(String barCodeEntry) {
+        mBarCodeList.add(barCodeEntry);
+        mBarCodeListAdapter.notifyDataSetChanged();
+        JSONArray barCodeList = list2JsonArray(mBarCodeList);
+        mBarCodeTextView.setText(barCodeList.toString());
+    }
+
     private void updateConnectionState(final int resourceId) {
         runOnUiThread(new Runnable() {
             @Override
@@ -311,6 +325,28 @@ public class DeviceScanActivity extends Activity {
         LayoutInflater mInflator = DeviceScanActivity.this.getLayoutInflater();
         View view = mInflator.inflate(R.layout.listitem_device, null);
         setContentView(view);
+
+        mBarCodeTextView = findViewById(R.id.data_barcode);
+        mPhotoFilePathTextView = findViewById(R.id.data_photo);
+
+        mBarCodeListView = findViewById(R.id.listview_barcode);
+        mBarCodeList = new ArrayList<String>();
+        mBarCodeListAdapter = new ArrayAdapter<String>(
+                this,
+                R.layout.listitem_plaintext,
+                R.id.plaintext_data,
+                mBarCodeList);
+        mBarCodeListView.setAdapter(mBarCodeListAdapter);
+
+        mPhotoFilePathListView = findViewById(R.id.listview_photo);
+        mPhotoFilePathList = new ArrayList<String>();
+        mPhotoFilePathListAdapter = new ArrayAdapter<String>(
+                this,
+                R.layout.listitem_plaintext,
+                R.id.plaintext_data,
+                mPhotoFilePathList);
+        mPhotoFilePathListView.setAdapter(mPhotoFilePathListAdapter);
+
         // extended controls (buttons, entry input, etc)
         mLogFilePath = findViewById(R.id.data_file_path);
         mEntryNameEditText = findViewById(R.id.inp_entry_name);
@@ -327,6 +363,80 @@ public class DeviceScanActivity extends Activity {
                 clearUI();
             }
         });
+        btnBarcode.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View _) {
+                Toast.makeText(getApplicationContext(),
+                        "take barcode: " + mBarCodeList.size(),
+                        Toast.LENGTH_SHORT).show();
+                new IntentIntegrator(DeviceScanActivity.this).initiateScan();
+
+//                addBarCodeEntry(new Date().toString());
+            }
+        });
+        btnPhoto.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View _) {
+                Toast.makeText(getApplicationContext(),
+                        "take photo: " + mPhotoFilePathList.size(),
+                        Toast.LENGTH_SHORT).show();
+                Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                startActivityForResult(cameraIntent, REQUEST_CAMERA_IMAGE);
+
+                addPhotoFilePathEntry(new Date().toString());
+            }
+        });
+        btnSave.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View _) {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
+                JSONObject outStruct = new JSONObject();
+                String outputString = "";
+                try {
+                    outStruct.put("time", sdf.format(new Date()));
+                    outStruct.put("entry", mEntryNameEditText.getText());
+                    if(mDataField.getText().length() > 0) {
+                        outStruct.put("mass", mDataField.getText());
+                    }
+
+                    if(mBarCodeList.size() > 0) {
+                        outStruct.put("barcode", list2JsonArray(mBarCodeList));
+                    }
+                    if(mPhotoFilePathList.size() > 0) {
+                        outStruct.put("photo", list2JsonArray(mPhotoFilePathList));
+                    }
+
+                    outputString = outStruct.toString(0).replaceAll("\n", "");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+
+                    outputString = String.format(
+                            "%s,%s,%s,%s,%s",
+                            sdf.format(new Date()),
+                            mEntryNameEditText.getText().toString(),
+                            mDataField.getText().toString(),
+                            mBarCodeTextView.getText(),
+                            mPhotoFilePathTextView.getText()
+                    );
+
+                }
+
+                File sdCard = Environment.getExternalStorageDirectory();
+                String outputFilePath = mLogFilePath.getText().toString()
+                        .replace("/sdcard", sdCard.getAbsolutePath());
+                try {
+                    FileOutputStream fOut = new FileOutputStream(new File(outputFilePath), true);
+                    fOut.write(("\n" + outputString).getBytes());
+                    fOut.close();
+                    Toast.makeText(getApplicationContext(),
+                            "saved: " + outputFilePath, Toast.LENGTH_SHORT).show();
+                } catch (Exception e) {
+                    Toast.makeText(getApplicationContext(),
+                            "FAILED: " + e.toString(), Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
     }
 
     @Override
@@ -375,10 +485,12 @@ public class DeviceScanActivity extends Activity {
                 if(resultCode == RESULT_OK) {
                     String lastImagePath = getLastImagePath();
                     if(lastImagePath == null) {
+                        /*
                         mPhotoFilePathTextView.setText("");
+                        */
                     } else {
-                        mPhotoFilePathTextView.setText(
-                                new File(lastImagePath).getName());
+                        addPhotoFilePathEntry(new File(lastImagePath).getName());
+//                        mPhotoFilePathTextView.setText(new File(lastImagePath).getName());
                     }
                 }
                 break;
@@ -386,10 +498,12 @@ public class DeviceScanActivity extends Activity {
                 if(resultCode == RESULT_OK) {
                     IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
                     if(scanResult != null) {
-                        mBarCodeTextView.setText(String.format(
+                        String barcodeText = String.format(
                                 "%s:%s",
                                 scanResult.getFormatName(),
-                                scanResult.getContents()));
+                                scanResult.getContents());
+                        addBarCodeEntry(barcodeText);
+//                        mBarCodeTextView.setText(barcodeText);
                     }
                 }
                 break;
