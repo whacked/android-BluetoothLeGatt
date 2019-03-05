@@ -564,6 +564,12 @@ public class DeviceScanActivity extends Activity {
     private void clearUI() {
         mDataField.setText(R.string.no_data);
         mEntryNameEditText.setText("");
+
+        mBarCodeList.clear();
+        mBarCodeListAdapter.notifyDataSetChanged();
+        mPhotoFilePathList.clear();
+        mPhotoFilePathListAdapter.notifyDataSetChanged();
+
         mPhotoFilePathTextView.setText("");
         mBarCodeTextView.setText("");
     }
