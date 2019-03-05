@@ -43,9 +43,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -85,6 +87,14 @@ public class DeviceScanActivity extends Activity {
     private TextView mBarCodeTextView;
     private TextView mPhotoFilePathTextView;
     private TextView mLogFilePath;
+
+    private ListView mBarCodeListView;
+    private ArrayList<String> mBarCodeList;
+    private ArrayAdapter<String> mBarCodeListAdapter;
+
+    private ListView mPhotoFilePathListView;
+    private ArrayList<String> mPhotoFilePathList;
+    private ArrayAdapter<String> mPhotoFilePathListAdapter;
 
     public static final String TARGET_SERVICE_UUID = "0000ffb0";
     public static final String TARGET_CHARACTERISTIC_UUID = "0000ffb2";
