@@ -130,10 +130,10 @@ public class DeviceScanActivity extends Activity {
             final String action = intent.getAction();
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
                 mConnected = true;
-                updateConnectionState(R.string.connected);
+                mConnectionState.setText("Connected");
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
                 mConnected = false;
-                updateConnectionState(R.string.disconnected);
+                mConnectionState.setText("Disconnected");
                 mDataField.setText(R.string.no_data);
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Show all the supported services and characteristics on the user interface.
@@ -148,7 +148,7 @@ public class DeviceScanActivity extends Activity {
         if (data != null) {
             try {
                 mReadout = MocreoReadout.parseReadoutData(data);
-                mDataField.setText(mReadout.toString());
+                mScaleDataField.setText(mReadout.toString());
             } catch(MocreoReadout.InvalidReadoutException e) {
 
             }
