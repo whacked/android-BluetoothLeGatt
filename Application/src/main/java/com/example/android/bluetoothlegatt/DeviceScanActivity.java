@@ -102,6 +102,7 @@ public class DeviceScanActivity extends Activity {
 
     private TextView mConnectionState;
     private EditText mDataField;
+    private TextView mScaleDataField;
     private boolean mConnected = false;
     private BluetoothGattCharacteristic mNotifyCharacteristic;
 
@@ -453,6 +454,8 @@ public class DeviceScanActivity extends Activity {
             }
         });
         btnSave.setOnClickListener(new View.OnClickListener() {
+        Button btnTake = findViewById(R.id.btn_take);
+        btnTake.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View _) {
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
@@ -497,6 +500,7 @@ public class DeviceScanActivity extends Activity {
                     Toast.makeText(getApplicationContext(),
                             "FAILED: " + e.toString(), Toast.LENGTH_SHORT).show();
                 }
+                mDataField.setText(mScaleDataField.getText());
             }
         });
     }
