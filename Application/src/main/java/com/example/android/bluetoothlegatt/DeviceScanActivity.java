@@ -69,6 +69,8 @@ import java.util.List;
  * Activity for scanning and displaying available Bluetooth LE devices.
  */
 public class DeviceScanActivity extends Activity {
+    public static final boolean DEBUG_ONLY = false;
+
     private BluetoothAdapter mBluetoothAdapter;
     private boolean mScanning;
     private Handler mHandler;
@@ -183,6 +185,72 @@ public class DeviceScanActivity extends Activity {
         mBarCodeListAdapter.notifyDataSetChanged();
         setListViewHeightBasedOnChildren(mBarCodeListView);
     }
+
+    private void saveDataToJsonl() {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
+        JSONObject outStruct = new JSONObject();
+        String outputString = "";
+
+        try {
+
+            if(mChkSetTime.isChecked()) {
+                outStruct.put("time", mSetTime.getText());
+            } else {
+                outStruct.put("time", sdf.format(new Date()));
+            }
+
+            if(mEntryNameEditText.getText().toString().trim().length() > 0) {
+                outStruct.put("entry", mEntryNameEditText.getText().toString().trim());
+            }
+
+            if(mDataField.getText().length() > 0) {
+                outStruct.put("mass",
+                        mDataField.getText().toString().trim() +
+                        mUnitButton.getText()
+                );
+            }
+
+            if(mBarCodeList.size() > 0) {
+                outStruct.put("barcode", list2JsonArray(mBarCodeList));
+            }
+            if(mPhotoFilePathList.size() > 0) {
+                outStruct.put("photo", list2JsonArray(mPhotoFilePathList));
+            }
+
+            if(mInpQuickCat.getText().length() > 0) {
+                outStruct.put("category", mInpQuickCat.getText().toString().trim());
+            }
+
+            outputString = outStruct.toString(0).replaceAll("\n", "");
+        } catch (JSONException e) {
+            e.printStackTrace();
+
+            outputString = String.format(
+                    "%s,%s,%s",
+                    sdf.format(new Date()),
+                    mEntryNameEditText.getText().toString(),
+                    mDataField.getText().toString()
+            );
+        }
+
+        if(DEBUG_ONLY) {
+            Toast.makeText(getApplicationContext(),
+                    outputString, Toast.LENGTH_LONG).show();
+        } else {
+            File sdCard = Environment.getExternalStorageDirectory();
+            String outputFilePath = mLogFilePath.getText().toString()
+                    .replace("/sdcard", sdCard.getAbsolutePath());
+            try {
+                FileOutputStream fOut = new FileOutputStream(new File(outputFilePath), true);
+                fOut.write(("\n" + outputString).getBytes());
+                fOut.close();
+                Toast.makeText(getApplicationContext(),
+                        "saved: " + outputFilePath, Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                Toast.makeText(getApplicationContext(),
+                        "FAILED: " + e.toString(), Toast.LENGTH_SHORT).show();
+            }
+        }
 
     }
 
@@ -389,9 +457,11 @@ public class DeviceScanActivity extends Activity {
                 Toast.makeText(getApplicationContext(),
                         "take barcode: " + mBarCodeList.size(),
                         Toast.LENGTH_SHORT).show();
-                new IntentIntegrator(DeviceScanActivity.this).initiateScan();
-
-//                addBarCodeEntry(new Date().toString());
+                if(DEBUG_ONLY) {
+                    addBarCodeEntry(new Date().toString());
+                } else {
+                    new IntentIntegrator(DeviceScanActivity.this).initiateScan();
+                }
             }
         });
         btnPhoto.setOnClickListener(new View.OnClickListener() {
@@ -400,60 +470,25 @@ public class DeviceScanActivity extends Activity {
                 Toast.makeText(getApplicationContext(),
                         "take photo: " + mPhotoFilePathList.size(),
                         Toast.LENGTH_SHORT).show();
-                Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                startActivityForResult(cameraIntent, REQUEST_CAMERA_IMAGE);
-
-                addPhotoFilePathEntry(new Date().toString());
+                if(DEBUG_ONLY) {
+                    addPhotoFilePathEntry(new Date().toString());
+                } else {
+                    Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    startActivityForResult(cameraIntent, REQUEST_CAMERA_IMAGE);
+                }
             }
         });
         findViewById(R.id.btn_save).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View _) {
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
-                JSONObject outStruct = new JSONObject();
-                String outputString = "";
-                try {
-                    outStruct.put("time", sdf.format(new Date()));
-                    outStruct.put("entry", mEntryNameEditText.getText());
-                    if(mDataField.getText().length() > 0) {
-                        outStruct.put("mass", mDataField.getText());
-                    }
-
-                    if(mBarCodeList.size() > 0) {
-                        outStruct.put("barcode", list2JsonArray(mBarCodeList));
-                    }
-                    if(mPhotoFilePathList.size() > 0) {
-                        outStruct.put("photo", list2JsonArray(mPhotoFilePathList));
-                    }
-
-                    outputString = outStruct.toString(0).replaceAll("\n", "");
-                } catch (JSONException e) {
-                    e.printStackTrace();
-
-                    outputString = String.format(
-                            "%s,%s,%s,%s,%s",
-                            sdf.format(new Date()),
-                            mEntryNameEditText.getText().toString(),
-                            mDataField.getText().toString(),
-                            mBarCodeTextView.getText(),
-                            mPhotoFilePathTextView.getText()
-                    );
-
-                }
-
-                File sdCard = Environment.getExternalStorageDirectory();
-                String outputFilePath = mLogFilePath.getText().toString()
-                        .replace("/sdcard", sdCard.getAbsolutePath());
-                try {
-                    FileOutputStream fOut = new FileOutputStream(new File(outputFilePath), true);
-                    fOut.write(("\n" + outputString).getBytes());
-                    fOut.close();
-                    Toast.makeText(getApplicationContext(),
-                            "saved: " + outputFilePath, Toast.LENGTH_SHORT).show();
-                } catch (Exception e) {
-                    Toast.makeText(getApplicationContext(),
-                            "FAILED: " + e.toString(), Toast.LENGTH_SHORT).show();
-                }
+                saveDataToJsonl();
+            }
+        });
+        findViewById(R.id.btn_save_and_clear).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View _) {
+                saveDataToJsonl();
+                clearUI();
             }
         });
     }
