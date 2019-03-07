@@ -18,11 +18,10 @@ repositories {
 }
 
 dependencies {
-    compile "com.android.support:support-v4:27.0.2"
-    compile "com.android.support:support-v13:27.0.2"
-    compile "com.android.support:cardview-v7:27.0.2"
-    compile "com.android.support:appcompat-v7:27.0.2"
-
+    compile 'com.android.support:support-v4:27.0.2'
+    compile 'com.android.support:support-v13:27.0.2'
+    compile 'com.android.support:cardview-v7:27.0.2'
+    compile 'com.android.support:appcompat-v7:27.0.2'
     // ref https://stackoverflow.com/a/23788163
     implementation 'com.journeyapps:zxing-android-embedded:3.0.2@aar'
     implementation 'com.google.zxing:core:3.2.0'
@@ -38,19 +37,15 @@ List<String> dirs = [
 
 android {
     compileSdkVersion 27
-
     buildToolsVersion '28.0.3'
-
     defaultConfig {
-        minSdkVersion 18
-        targetSdkVersion 27
+        minSdkVersion 23
+        targetSdkVersion 23
     }
-
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_7
         targetCompatibility JavaVersion.VERSION_1_7
     }
-
     sourceSets {
         main {
             dirs.each { dir ->
@@ -62,5 +57,6 @@ android {
         androidTest.java.srcDirs = ['tests/src']
 
     }
-
+    productFlavors {
+    }
 }
