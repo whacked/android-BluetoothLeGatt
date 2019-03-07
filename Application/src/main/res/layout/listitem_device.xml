@@ -135,10 +135,16 @@
                 android:orientation="horizontal">
 
                 <Button
-                    android:id="@+id/btn_clear"
+                    android:id="@+id/btn_clear_some"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Clear" />
+                    android:text="C" />
+
+                <Button
+                    android:id="@+id/btn_clear_all"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="AC" />
 
                 <Space
                     android:layout_width="5dp"
@@ -146,9 +152,20 @@
 
                 <Button
                     android:id="@+id/btn_save"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:text="Save" />
+
+                <Space
+                    android:layout_width="5dp"
+                    android:layout_height="wrap_content" />
+
+                <Button
+                    android:id="@+id/btn_save_and_clear"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Save+AC" />
             </LinearLayout>
 
             <LinearLayout

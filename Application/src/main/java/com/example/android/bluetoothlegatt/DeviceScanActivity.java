@@ -368,12 +368,16 @@ public class DeviceScanActivity extends Activity {
         mEntryNameEditText = findViewById(R.id.inp_entry_name);
         mDataField = findViewById(R.id.data_value);
 
-        Button btnClear = findViewById(R.id.btn_clear);
         Button btnBarcode = findViewById(R.id.btn_barcode);
         Button btnPhoto = findViewById(R.id.btn_photo);
-        Button btnSave = findViewById(R.id.btn_save);
 
-        btnClear.setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.btn_clear_some).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View _) {
+                clearMostSpecificInputs();
+            }
+        });
+        findViewById(R.id.btn_clear_all).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View _) {
                 clearUI();
@@ -402,7 +406,7 @@ public class DeviceScanActivity extends Activity {
                 addPhotoFilePathEntry(new Date().toString());
             }
         });
-        btnSave.setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.btn_save).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View _) {
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
@@ -571,15 +575,26 @@ public class DeviceScanActivity extends Activity {
         });
     }
 
-    private void clearUI() {
+    private void clearMostSpecificInputs() {
         mDataField.setText(R.string.no_data);
-        mEntryNameEditText.setText("");
+        mEntryNameEditText.setText(R.string.no_data);
 
         mBarCodeList.clear();
         mBarCodeListAdapter.notifyDataSetChanged();
+        setListViewHeightBasedOnChildren(mBarCodeListView);
+
         mPhotoFilePathList.clear();
         mPhotoFilePathListAdapter.notifyDataSetChanged();
+        setListViewHeightBasedOnChildren(mPhotoFilePathListView);
+    }
 
+    private void clearUI() {
+        clearMostSpecificInputs();
+
+        mInpQuickCat.setText(R.string.no_data);
+
+        mSetTime.setText(R.string.set_time);
+        mChkSetTime.setChecked(false);
     }
 
     // Device scan callback.
