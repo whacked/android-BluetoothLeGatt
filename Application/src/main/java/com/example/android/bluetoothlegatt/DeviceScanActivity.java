@@ -17,6 +17,8 @@
 package com.example.android.bluetoothlegatt;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.TimePickerDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
@@ -25,6 +27,7 @@ import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -37,6 +40,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.provider.MediaStore;
 import android.support.annotation.RequiresApi;
+import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -44,11 +48,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.google.zxing.integration.android.IntentIntegrator;
@@ -62,8 +69,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+
+import static android.app.TimePickerDialog.*;
 
 /**
  * Activity for scanning and displaying available Bluetooth LE devices.
@@ -102,11 +113,20 @@ public class DeviceScanActivity extends Activity {
 
     private TextView mConnectionState;
     private EditText mDataField;
+    private Button mUnitButton;
     private TextView mScaleDataField;
     private boolean mConnected = false;
     private BluetoothGattCharacteristic mNotifyCharacteristic;
 
+    private CheckBox mChkSetTime;
+    private TextView mSetTime;
+
+    private Button mBtnQuickCat;
+    private EditText mInpQuickCat;
+
     private MocreoReadout mReadout;
+
+    private List<String> mQuickCats;
 
     private BluetoothLeService mBluetoothLeService;
     private final static String TAG = DeviceScanActivity.class.getSimpleName();
@@ -319,6 +339,7 @@ public class DeviceScanActivity extends Activity {
                 },
                 REQUEST_CODE_ASK_PERMISSIONS);
 
+        mQuickCats = Arrays.asList("eat", "do", "buy", "etc");
         initMainView();
 
         // Initializes a Bluetooth adapter.  For API level 18 and above, get a reference to
@@ -434,7 +455,84 @@ public class DeviceScanActivity extends Activity {
         // extended controls (buttons, entry input, etc)
         mLogFilePath = findViewById(R.id.data_file_path);
         mEntryNameEditText = findViewById(R.id.inp_entry_name);
+        mEntryNameEditText.requestFocus();
         mDataField = findViewById(R.id.data_value);
+        mDataField.setInputType(InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        mDataField.setRawInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+
+        mUnitButton = findViewById(R.id.btn_data_unit);
+        mUnitButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View _) {
+                String currentUnit = mUnitButton.getText().toString();
+                Integer[] unitCycle = new Integer[]{
+                        R.string.unit_g,
+                        R.string.unit_ml,
+                        R.string.no_data,
+                };
+                Integer index;
+                for(index = 0; index < unitCycle.length; ++index) {
+                    if(currentUnit == getResources().getString(unitCycle[index])) {
+                        break;
+                    }
+                }
+                Integer nextIndex = (index+1) % unitCycle.length;
+                String newText = getResources().getString(unitCycle[nextIndex]);
+                mUnitButton.setText(newText);
+            }
+        });
+
+        mBtnQuickCat = findViewById(R.id.btn_quick_cat);
+        mInpQuickCat = findViewById(R.id.txt_quick_cat);
+        mBtnQuickCat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View _) {
+                AlertDialog.Builder quickCatPicker = new AlertDialog.Builder(DeviceScanActivity.this);
+                final String[] quickCats = (String[]) mQuickCats.toArray();
+                quickCatPicker.setTitle("quick cat");
+                quickCatPicker.setItems(quickCats, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        mInpQuickCat.setText(quickCats[which] + " ");
+                        mEntryNameEditText.requestFocus();
+                    }
+                });
+                    quickCatPicker.show();
+            }
+        });
+
+        mSetTime = findViewById(R.id.txt_set_time);
+        mChkSetTime = findViewById(R.id.chk_set_time);
+        mChkSetTime.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                if(!isChecked) {
+                    mSetTime.setText(R.string.set_time);
+                } else {
+                    Calendar cal = Calendar.getInstance();
+                    TimePickerDialog timePickerDialog = new TimePickerDialog(DeviceScanActivity.this, new OnTimeSetListener() {
+                        @Override
+                        public void onTimeSet(TimePicker timePicker, int hourOfDay, int minutes) {
+                            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
+                            Calendar cal = Calendar.getInstance();
+                            cal.setTime(new Date());
+                            cal.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                            cal.set(Calendar.MINUTE, minutes);
+                            cal.set(Calendar.SECOND, 0);
+                            mSetTime.setText(sdf.format(cal.getTime()));
+                        }
+                    }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE),true);
+                    timePickerDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                        @Override
+                        public void onCancel(DialogInterface dialog) {
+                            mChkSetTime.setChecked(false);
+                            mSetTime.setText(R.string.set_time);
+                        }
+                    });
+                    timePickerDialog.show();
+                }
+            }
+        });
 
         Button btnBarcode = findViewById(R.id.btn_barcode);
         Button btnPhoto = findViewById(R.id.btn_photo);
@@ -605,7 +703,9 @@ public class DeviceScanActivity extends Activity {
         btnTake.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View _) {
-                mDataField.setText(mScaleDataField.getText());
+                mDataField.setText(mScaleDataField.getText().toString().replaceAll("[^\\d.]", ""));
+                mDataField.requestFocus();
+                mDataField.setSelection(mDataField.getText().length());
             }
         });
     }
