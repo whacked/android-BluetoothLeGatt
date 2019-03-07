@@ -85,8 +85,6 @@ public class DeviceScanActivity extends Activity {
 
     private String mDeviceAddress;
     private EditText mEntryNameEditText;
-    private TextView mBarCodeTextView;
-    private TextView mPhotoFilePathTextView;
     private TextView mLogFilePath;
 
     private ListView mBarCodeListView;
@@ -146,7 +144,6 @@ public class DeviceScanActivity extends Activity {
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
                 mConnected = false;
                 mConnectionState.setText("Disconnected");
-                mDataField.setText(R.string.no_data);
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Show all the supported services and characteristics on the user interface.
                 initializeCharacteristic(mBluetoothLeService.getSupportedGattServices());
@@ -178,15 +175,15 @@ public class DeviceScanActivity extends Activity {
     private void addPhotoFilePathEntry(String photoFilePathEntry) {
         mPhotoFilePathList.add(photoFilePathEntry);
         mPhotoFilePathListAdapter.notifyDataSetChanged();
-        JSONArray photoFilePathList = list2JsonArray(mPhotoFilePathList);
-        mPhotoFilePathTextView.setText(photoFilePathList.toString());
+        setListViewHeightBasedOnChildren(mPhotoFilePathListView);
     }
 
     private void addBarCodeEntry(String barCodeEntry) {
         mBarCodeList.add(barCodeEntry);
         mBarCodeListAdapter.notifyDataSetChanged();
-        JSONArray barCodeList = list2JsonArray(mBarCodeList);
-        mBarCodeTextView.setText(barCodeList.toString());
+        setListViewHeightBasedOnChildren(mBarCodeListView);
+    }
+
     }
 
     private void updateConnectionState(final int resourceId) {
@@ -321,13 +318,32 @@ public class DeviceScanActivity extends Activity {
         return true;
     }
 
+    // http://nex-otaku-en.blogspot.com/2010/12/android-put-listview-in-scrollview.html
+    public static void setListViewHeightBasedOnChildren(ListView listView) {
+        ListAdapter listAdapter = listView.getAdapter();
+        if (listAdapter == null) {
+            // pre-condition
+            return;
+        }
+
+        int totalHeight = 0;
+        int desiredWidth = View.MeasureSpec.makeMeasureSpec(listView.getWidth(), View.MeasureSpec.AT_MOST);
+        for (int i = 0; i < listAdapter.getCount(); i++) {
+            View listItem = listAdapter.getView(i, null, listView);
+            listItem.measure(desiredWidth, View.MeasureSpec.UNSPECIFIED);
+            totalHeight += listItem.getMeasuredHeight();
+        }
+
+        ViewGroup.LayoutParams params = listView.getLayoutParams();
+        params.height = totalHeight + (listView.getDividerHeight() * (listAdapter.getCount() - 1));
+        listView.setLayoutParams(params);
+        listView.requestLayout();
+    }
+
     private void initMainView() {
         LayoutInflater mInflator = DeviceScanActivity.this.getLayoutInflater();
         View view = mInflator.inflate(R.layout.listitem_device, null);
         setContentView(view);
-
-        mBarCodeTextView = findViewById(R.id.data_barcode);
-        mPhotoFilePathTextView = findViewById(R.id.data_photo);
 
         mBarCodeListView = findViewById(R.id.listview_barcode);
         mBarCodeList = new ArrayList<String>();
@@ -436,7 +452,6 @@ public class DeviceScanActivity extends Activity {
                 }
             }
         });
-
     }
 
     @Override
@@ -485,12 +500,8 @@ public class DeviceScanActivity extends Activity {
                 if(resultCode == RESULT_OK) {
                     String lastImagePath = getLastImagePath();
                     if(lastImagePath == null) {
-                        /*
-                        mPhotoFilePathTextView.setText("");
-                        */
                     } else {
                         addPhotoFilePathEntry(new File(lastImagePath).getName());
-//                        mPhotoFilePathTextView.setText(new File(lastImagePath).getName());
                     }
                 }
                 break;
@@ -503,7 +514,6 @@ public class DeviceScanActivity extends Activity {
                                 scanResult.getFormatName(),
                                 scanResult.getContents());
                         addBarCodeEntry(barcodeText);
-//                        mBarCodeTextView.setText(barcodeText);
                     }
                 }
                 break;
@@ -570,8 +580,6 @@ public class DeviceScanActivity extends Activity {
         mPhotoFilePathList.clear();
         mPhotoFilePathListAdapter.notifyDataSetChanged();
 
-        mPhotoFilePathTextView.setText("");
-        mBarCodeTextView.setText("");
     }
 
     // Device scan callback.
