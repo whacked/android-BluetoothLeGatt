@@ -27,7 +27,7 @@ import java.util.Map;
 
 enum Unit
 {
-    G, ML, LB, OZ;
+    G, ML, LB, OZ
 }
 
 public class MocreoReadout {
