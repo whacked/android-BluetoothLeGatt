@@ -26,6 +26,7 @@
     <string name="title_devices">BLE Device Scan</string>
     <string name="error_bluetooth_not_supported">Bluetooth not supported.</string>
     <string name="default_log_file_path">/sdcard/Download/Sync/orgzly/masslog.jsonl</string>
+    <string name="default_config_file_path">/sdcard/Download/Sync/orgzly/logger-config.json</string>
 
     <string name="unit_g">g</string>
     <string name="unit_ml">ml</string>
@@ -33,6 +34,8 @@
     <string name="unknown_device">Unknown device</string>
     <string name="unknown_characteristic">Unknown characteristic</string>
     <string name="unknown_service">Unknown service</string>
+
+    <string name="end_activity_keyword">\@end</string>
 
     <!-- Menu items -->
     <string name="menu_connect">Connect</string>

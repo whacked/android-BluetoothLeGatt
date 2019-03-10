@@ -65,8 +65,15 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -99,6 +106,7 @@ public class DeviceScanActivity extends Activity {
     private String mDeviceAddress;
     private EditText mEntryNameEditText;
     private TextView mLogFilePath;
+    private TextView mConfigFilePath;
 
     private ListView mBarCodeListView;
     private ArrayList<String> mBarCodeList;
@@ -127,6 +135,8 @@ public class DeviceScanActivity extends Activity {
     private MocreoReadout mReadout;
 
     private List<String> mQuickCats;
+
+    private JSONObject mJsonConfig;
 
     private BluetoothLeService mBluetoothLeService;
     private final static String TAG = DeviceScanActivity.class.getSimpleName();
@@ -315,6 +325,40 @@ public class DeviceScanActivity extends Activity {
         setBluetoothNotifyCharacteristic(massCharacteristic);
     }
 
+    private void loadJsonConfig() {
+        String configFilePath = mConfigFilePath.getText().toString();
+        File configFile = new File(configFilePath);
+        StringBuffer sb = new StringBuffer();
+        if(configFile.exists()) {
+            try {
+                FileInputStream fIn = new FileInputStream(configFile);
+                BufferedReader br = new BufferedReader(new InputStreamReader(fIn));
+                String line;
+                try {
+                    while((line = br.readLine()) != null) {
+                        sb.append(line).append("\n");
+                    }
+                    fIn.close();
+                } catch(IOException e) {
+                    Toast.makeText(getApplicationContext(),
+                            "exception in reading json " + e.toString(), Toast.LENGTH_LONG).show();
+                }
+
+                String jsonSource = sb.toString();
+                try {
+                    mJsonConfig = new JSONObject(jsonSource);
+                } catch(JSONException e) {
+                    Toast.makeText(getApplicationContext(),
+                            "failed to parse json: " + e.toString() + "\nSOURCE: " + jsonSource, Toast.LENGTH_LONG).show();
+
+                }
+            } catch(FileNotFoundException e) {
+                Toast.makeText(getApplicationContext(),
+                        "could not find config file! " + e.toString(), Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -339,8 +383,21 @@ public class DeviceScanActivity extends Activity {
                 },
                 REQUEST_CODE_ASK_PERMISSIONS);
 
-        mQuickCats = Arrays.asList("eat", "do", "buy", "etc");
         initMainView();
+        loadJsonConfig();
+        mQuickCats = new ArrayList<String>();
+        if(mJsonConfig != null && mJsonConfig.has("quickcats")) {
+            try {
+                JSONArray quickCats = mJsonConfig.getJSONArray("quickcats");
+                for(int i=0; i < quickCats.length(); ++i) {
+                    mQuickCats.add(quickCats.getString(i));
+                }
+            } catch (JSONException e) {
+                Toast.makeText(getApplicationContext(),
+                        "failed to read quickcats " + e.toString(), Toast.LENGTH_LONG).show();
+            }
+        }
+        mQuickCats.add(getResources().getString(R.string.end_activity_keyword));
 
         // Initializes a Bluetooth adapter.  For API level 18 and above, get a reference to
         // BluetoothAdapter through BluetoothManager.
@@ -454,6 +511,7 @@ public class DeviceScanActivity extends Activity {
 
         // extended controls (buttons, entry input, etc)
         mLogFilePath = findViewById(R.id.data_file_path);
+        mConfigFilePath = findViewById(R.id.config_file_path);
         mEntryNameEditText = findViewById(R.id.inp_entry_name);
         mEntryNameEditText.requestFocus();
         mDataField = findViewById(R.id.data_value);
@@ -488,7 +546,7 @@ public class DeviceScanActivity extends Activity {
             @Override
             public void onClick(View _) {
                 AlertDialog.Builder quickCatPicker = new AlertDialog.Builder(DeviceScanActivity.this);
-                final String[] quickCats = (String[]) mQuickCats.toArray();
+                final String[] quickCats = mQuickCats.toArray(new String[mQuickCats.size()]);
                 quickCatPicker.setTitle("quick cat");
                 quickCatPicker.setItems(quickCats, new DialogInterface.OnClickListener() {
                     @Override
