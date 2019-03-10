@@ -31,52 +31,63 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="4dp"
+                android:layout_gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
+                <TextView
+                    android:id="@+id/device_name"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_margin="4dp"
-                    android:orientation="horizontal">
+                    android:textSize="12dp"
+                    android:text="waiting..."
+                    />
 
-                    <TextView
-                        android:id="@+id/device_name"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="12dp"
-                        android:text="waiting..."
-                        />
+                <Space
+                    android:layout_width="5dp"
+                    android:layout_height="wrap_content" />
 
-                    <Space
-                        android:layout_width="5dp"
-                        android:layout_height="wrap_content" />
+                <TextView
+                    android:id="@+id/device_address"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="10dp" />
 
-                    <TextView
-                        android:id="@+id/device_address"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="10dp" />
+                <Space
+                    android:layout_width="5dp"
+                    android:layout_height="wrap_content" />
 
-                    <Space
-                        android:layout_width="5dp"
-                        android:layout_height="wrap_content" />
+                <TextView
+                    android:id="@+id/connection_state"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/disconnected"
+                    android:textSize="14dp" />
 
-                    <TextView
-                        android:id="@+id/connection_state"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/disconnected"
-                        android:textSize="14dp" />
-                </LinearLayout>
+                <Space
+                    android:layout_weight="1"
+                    android:layout_width="5dp"
+                    android:layout_height="wrap_content" />
 
+                <TextView
+                    android:id="@+id/data_scale"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0g"
+                    android:freezesText="true"
+                    android:textSize="20sp" />
+
+                <Button
+                    android:id="@+id/btn_take"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:layout_gravity="right"
+                    android:textSize="12dp"
+                    android:text="Take" />
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="10dp"
                 android:orientation="horizontal">
 
                 <TextView
@@ -95,7 +106,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/no_data"
                     android:freezesText="true"
-                    android:textSize="24sp" />
+                    android:textSize="20sp" />
 
                 <Button
                     android:id="@+id/btn_data_unit"
@@ -103,7 +114,7 @@
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:textSize="16sp"
-                    android:background="#EEEEEE" />
+                    android:background="#DDDDDD" />
 
                 <Space
                     android:layout_weight="1"
@@ -111,19 +122,19 @@
                     android:layout_height="wrap_content" />
 
                 <TextView
-                    android:id="@+id/data_scale"
+                    android:id="@+id/txt_dt"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="0g"
-                    android:freezesText="true"
-                    android:textSize="20sp" />
+                    android:text="@string/no_data"
+                    android:textSize="18sp" />
 
                 <Button
-                    android:id="@+id/btn_take"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="right"
-                    android:text="Take" />
+                    android:id="@+id/btn_take_dt"
+                    android:text="dt"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:textSize="16sp"
+                    android:background="#DDDDDD" />
             </LinearLayout>
 
             <EditText
@@ -139,7 +150,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="10dp"
+                android:layout_margin="2dp"
                 android:orientation="horizontal">
 
                 <Button
@@ -179,61 +190,39 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="10dp"
-                android:orientation="vertical">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
+                android:orientation="horizontal">
+                <Button
+                    android:id="@+id/btn_barcode"
+                    android:layout_width="0px"
+                    android:layout_weight="2"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <ListView
-                        android:id="@+id/listview_barcode"
-                        android:layout_width="0px"
-                        android:layout_weight="5"
-                        android:layout_height="wrap_content">
-                    </ListView>
-
-                    <Button
-                        android:id="@+id/btn_barcode"
-                        android:layout_width="0px"
-                        android:layout_weight="2"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="right"
-                        android:text="Barcode" />
-                </LinearLayout>
+                    android:layout_gravity="right"
+                    android:text="Barcode" />
+                <Button
+                    android:id="@+id/btn_photo"
+                    android:layout_weight="2"
+                    android:layout_width="0px"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="right"
+                    android:text="Photo" />
             </LinearLayout>
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="10dp"
-                android:orientation="vertical">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <ListView
-                        android:id="@+id/listview_photo"
-                        android:layout_weight="5"
-                        android:layout_width="0px"
-                        android:layout_height="wrap_content">
-                    </ListView>
-
-                    <Button
-                        android:id="@+id/btn_photo"
-                        android:layout_weight="2"
-                        android:layout_width="0px"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="right"
-                        android:text="Photo" />
-
-                </LinearLayout>
-
+                android:orientation="horizontal">
+                <ListView
+                    android:id="@+id/listview_barcode"
+                    android:layout_width="0px"
+                    android:layout_weight="5"
+                    android:layout_height="wrap_content">
+                </ListView>
+                <ListView
+                    android:id="@+id/listview_photo"
+                    android:layout_weight="5"
+                    android:layout_width="0px"
+                    android:layout_height="wrap_content">
+                </ListView>
             </LinearLayout>
-
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -259,6 +248,18 @@
                     android:layout_weight="1"
                     android:layout_height="wrap_content" />
 
+                <Button
+                    android:id="@+id/btn_end_activity"
+                    android:text="END"
+                    android:textSize="10sp"
+                    android:layout_width="50dp"
+                    android:layout_height="40dp" />
+
+                <Space
+                    android:layout_width="5dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content" />
+
                 <TextView
                     android:id="@+id/txt_set_time"
                     android:text="@string/set_time"
@@ -273,19 +274,34 @@
 
             </LinearLayout>
 
-
-            <EditText
-                android:id="@+id/data_file_path"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:ems="10"
-                android:enabled="false"
-                android:inputType="text"
-                android:freezesText="true"
-                android:text="@string/default_log_file_path"
-                android:textSize="10sp" />
-
+                android:orientation="horizontal"
+                >
+                <EditText
+                    android:id="@+id/data_file_path"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:ems="10"
+                    android:enabled="false"
+                    android:inputType="text"
+                    android:freezesText="true"
+                    android:text="@string/default_log_file_path"
+                    android:textSize="6sp" />
+                <EditText
+                    android:id="@+id/config_file_path"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:ems="10"
+                    android:enabled="false"
+                    android:inputType="text"
+                    android:freezesText="true"
+                    android:text="@string/default_config_file_path"
+                    android:textSize="6sp" />
+            </LinearLayout>
         </LinearLayout>
     </ScrollView>
-
 </LinearLayout>
