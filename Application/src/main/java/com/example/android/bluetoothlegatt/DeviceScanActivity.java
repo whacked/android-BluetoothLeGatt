@@ -135,6 +135,10 @@ public class DeviceScanActivity extends Activity {
     private MocreoReadout mReadout;
 
     private List<String> mQuickCats;
+    private Button mBtnDt;
+    private TextView mTxtDt;
+    private Date mStartDate;
+    private Date mEndDate;
 
     private JSONObject mJsonConfig;
 
@@ -249,6 +253,12 @@ public class DeviceScanActivity extends Activity {
 
             if(mInpQuickCat.getText().length() > 0) {
                 outStruct.put("category", mInpQuickCat.getText().toString().trim());
+            }
+
+            if(mStartDate != null && mEndDate != null) {
+                outStruct.put("dt", String.format(
+                    "%ds", (mEndDate.getTime() - mStartDate.getTime()) / 1000
+                ));
             }
 
             outputString = outStruct.toString(0).replaceAll("\n", "");
@@ -559,11 +569,40 @@ public class DeviceScanActivity extends Activity {
             }
         });
 
+        mTxtDt = findViewById(R.id.txt_dt);
+        mBtnDt = findViewById(R.id.btn_take_dt);
+        mBtnDt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View _) {
+                if(mStartDate == null) {
+                    mStartDate = new Date();
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
+                    mSetTime.setText(sdf.format(mStartDate));
+                    mChkSetTime.setChecked(true);
+                } else {
+                    mEndDate = new Date();
+                    mTxtDt.setText(String.format(
+                        "%ds", (mEndDate.getTime() - mStartDate.getTime()) / 1000
+                    ));
+                }
+            }
+        });
+
+        findViewById(R.id.btn_end_activity).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View _) {
+                mInpQuickCat.setText(R.string.end_activity_keyword);
+                saveDataToJsonl();
+                clearUI();
+            }
+        });
+
         mSetTime = findViewById(R.id.txt_set_time);
         mChkSetTime = findViewById(R.id.chk_set_time);
-        mChkSetTime.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        mChkSetTime.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+            public void onClick(View _) {
+                boolean isChecked = mChkSetTime.isChecked();
                 if(!isChecked) {
                     mSetTime.setText(R.string.set_time);
                 } else {
@@ -779,6 +818,10 @@ public class DeviceScanActivity extends Activity {
         mPhotoFilePathList.clear();
         mPhotoFilePathListAdapter.notifyDataSetChanged();
         setListViewHeightBasedOnChildren(mPhotoFilePathListView);
+
+        mStartDate = null;
+        mEndDate = null;
+        mTxtDt.setText(R.string.no_data);
     }
 
     private void clearUI() {
