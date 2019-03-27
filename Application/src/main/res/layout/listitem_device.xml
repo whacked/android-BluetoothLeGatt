@@ -25,13 +25,14 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
             android:layout_margin="6dp"
             android:orientation="vertical">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
+                android:layout_gravity="center"
                 android:orientation="horizontal">
 
                 <TextView
@@ -87,8 +88,10 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:layout_height="180dp"
+                android:layout_gravity="bottom"
+                android:gravity="center"
+                android:orientation="vertical">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -111,7 +114,7 @@
                 <Button
                     android:id="@+id/btn_data_unit"
                     android:text="@string/unit_g"
-                    android:layout_width="40dp"
+                    android:layout_width="100dp"
                     android:layout_height="40dp"
                     android:textSize="16sp"
                     android:background="#DDDDDD" />
@@ -131,8 +134,8 @@
                 <Button
                     android:id="@+id/btn_take_dt"
                     android:text="dt"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="200dp"
+                    android:layout_height="60dp"
                     android:textSize="16sp"
                     android:background="#DDDDDD" />
             </LinearLayout>
@@ -145,35 +148,41 @@
                 android:hint="entry name"
                 android:freezesText="true"
                 android:inputType="textAutoCorrect"
-                android:text="" />
+                android:textSize="20dp"
+                android:text="@string/no_data" />
 
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="2dp"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:layout_gravity="center_horizontal">
 
                 <Button
                     android:id="@+id/btn_clear_some"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="C" />
+                    android:textSize="30dp"
+                    android:text="CLR" />
 
                 <Button
                     android:id="@+id/btn_clear_all"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="AC" />
+                    android:textSize="30dp"
+                    android:text="ALLCLR" />
 
                 <Space
                     android:layout_width="5dp"
                     android:layout_height="wrap_content" />
+
 
                 <Button
                     android:id="@+id/btn_save"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:textSize="30dp"
                     android:text="Save" />
 
                 <Space
@@ -184,6 +193,7 @@
                     android:id="@+id/btn_save_and_clear"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:textSize="30dp"
                     android:text="Save+AC" />
             </LinearLayout>
 
@@ -204,6 +214,7 @@
                     android:layout_width="0px"
                     android:layout_height="wrap_content"
                     android:layout_gravity="right"
+                    android:textSize="30dp"
                     android:text="Photo" />
             </LinearLayout>
             <LinearLayout
@@ -225,23 +236,24 @@
             </LinearLayout>
 
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:gravity="center"
                 android:orientation="horizontal">
 
                 <Button
                     android:id="@+id/btn_quick_cat"
-                    android:text="QC"
-                    android:textSize="12sp"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp" />
+                    android:text="QUICKCAT"
+                    android:textSize="30sp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
 
                 <EditText
                     android:id="@+id/txt_quick_cat"
                     android:hint="@string/quick_cat"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="12sp" />
+                    android:textSize="16sp" />
 
                 <Space
                     android:layout_width="5dp"
@@ -251,9 +263,9 @@
                 <Button
                     android:id="@+id/btn_end_activity"
                     android:text="END"
-                    android:textSize="10sp"
-                    android:layout_width="50dp"
-                    android:layout_height="40dp" />
+                    android:textSize="30sp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
 
                 <Space
                     android:layout_width="5dp"
